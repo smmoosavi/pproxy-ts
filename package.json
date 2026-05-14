@@ -1,5 +1,5 @@
 {
-  "name": "pproxy-ts",
+  "name": "pproxy",
   "module": "index.ts",
   "type": "module",
   "private": true,

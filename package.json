@@ -1,9 +1,13 @@
 {
   "name": "pproxy-ts",
-  "module": "index.ts",
+  "version": "1.0.0",
   "type": "module",
   "private": true,
+  "main": "src/index.ts",
   "scripts": {
+    "start": "node --import tsx src/index.ts",
+    "dev": "node --import tsx --watch src/index.ts",
+    "build": "bun run build.ts",
     "prepare": "husky",
     "pre-commit": "tsc && lint-staged",
     "format": "prettier --write '**/*.{js,jsx,ts,tsx,json,yml,css,scss,md}'",
@@ -11,9 +15,16 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
+    "@types/node": "^25.7.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
     "prettier": "^3.8.3",
+    "tsx": "^4.21.1",
     "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "commander": "^14.0.3",
+    "proxy-chain": "^2.7.1",
+    "zod": "^4.4.3"
   }
 }

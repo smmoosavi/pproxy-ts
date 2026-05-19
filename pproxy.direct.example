@@ -1,0 +1,19 @@
+# Direct proxy bypass list
+# Lines starting with # are comments
+# Empty lines are ignored
+
+# Exact domain match
+foo.bar.com
+google.com
+
+# Wildcard subdomain match (matches any subdomain)
+*.example.com
+*.github.com
+
+# Wildcard TLD match (matches any domain with this TLD)
+*.net
+*.local
+
+# Partial keyword match (matches anywhere in hostname)
+localhost
+foobar

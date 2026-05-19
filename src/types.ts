@@ -37,6 +37,8 @@ export interface ProxyConfig {
   listen: string;
   /** Upstream server URI (e.g., "direct", "http://127.0.0.1:4080", "socks5://127.0.0.1:1080") */
   upstream: string;
+  /** Path to direct file with domains to bypass proxy (optional) */
+  directFile?: string;
 }
 
 /**

@@ -6,6 +6,7 @@
 import { logger } from './logger.ts';
 import { parseCliArgs } from './cli.ts';
 import { startProxyServer, stopProxyServer } from './proxy.ts';
+import { UsageMeter } from './usage-meter.ts';
 
 async function main() {
   try {
@@ -14,9 +15,14 @@ async function main() {
 
     // Start the proxy server
     const server = await startProxyServer(config, logger);
+    const usageMeter = config.showFooter
+      ? new UsageMeter(server, logger, config)
+      : undefined;
+    usageMeter?.start();
 
     // Handle graceful shutdown
     const shutdown = async () => {
+      usageMeter?.stop();
       logger.emptyLine();
       await stopProxyServer(server, logger);
       process.exit(0);

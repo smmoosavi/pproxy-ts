@@ -33,6 +33,8 @@ Options:
   -l, --listen <address>   HTTP proxy server listen address (default: "0.0.0.0:3080")
   -r, --rserver <uri>      Upstream proxy server URI (default: "direct")
   -d, --direct <file>      Path to direct file with domains to bypass proxy
+  -p, --peak-bytes <bytes> Maximum bytes per second used to scale the usage graph (default: "6M")
+  --no-footer              Disable footer display
   -h, --help               Show help message
 ```
 
@@ -66,6 +68,12 @@ Start proxy with direct bypass file:
 
 ```bash
 pnpm start -- -r http://127.0.0.1:4080 -d pproxy.direct
+```
+
+Set usage graph peak scale:
+
+```bash
+pnpm start -- --peak-bytes 12M
 ```
 
 ## Direct Bypass Feature

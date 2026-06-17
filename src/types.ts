@@ -30,6 +30,34 @@ export const UpstreamServerSchema = z
   );
 
 /**
+ * Schema for byte size values such as 1024, 512K, or 6M
+ */
+export const ByteSizeSchema = z
+  .string()
+  .regex(
+    /^\d+(?:\.\d+)?[KMGT]?$/i,
+    'Byte size must be a positive number with optional K, M, G, or T suffix',
+  )
+  .transform((value) => {
+    const match = /^(\d+(?:\.\d+)?)([KMGT]?)$/i.exec(value)!;
+    const number = Number(match[1]);
+    const suffix = match[2]?.toUpperCase() ?? '';
+    const multiplier =
+      suffix === 'K'
+        ? 1024
+        : suffix === 'M'
+          ? 1024 ** 2
+          : suffix === 'G'
+            ? 1024 ** 3
+            : suffix === 'T'
+              ? 1024 ** 4
+              : 1;
+
+    return Math.floor(number * multiplier);
+  })
+  .refine((value) => value > 0, 'Byte size must be greater than 0');
+
+/**
  * Configuration for the proxy server
  */
 export interface ProxyConfig {
@@ -39,6 +67,10 @@ export interface ProxyConfig {
   upstream: string;
   /** Path to direct file with domains to bypass proxy (optional) */
   directFile?: string;
+  /** Maximum bytes per second used to scale the usage graph */
+  peakBytes: number;
+  /** Whether to show the live usage footer */
+  showFooter: boolean;
 }
 
 /**

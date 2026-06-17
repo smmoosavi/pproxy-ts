@@ -4,13 +4,18 @@
 
 import { Command } from 'commander';
 import type { ProxyConfig } from './types.ts';
-import { ListenAddressSchema, UpstreamServerSchema } from './types.ts';
+import {
+  ByteSizeSchema,
+  ListenAddressSchema,
+  UpstreamServerSchema,
+} from './types.ts';
 
 /**
  * Parse command line arguments and return configuration
  */
 export function parseCliArgs(argv: string[]): ProxyConfig {
   const program = new Command();
+  const normalizedArgv = argv[2] === '--' ? argv.toSpliced(2, 1) : argv;
 
   program
     .name('pproxy-ts')
@@ -25,13 +30,21 @@ export function parseCliArgs(argv: string[]): ProxyConfig {
       '-d, --direct <file>',
       'Path to direct file with domains to bypass proxy',
     )
+    .option(
+      '-p, --peak-bytes <bytes>',
+      'Maximum bytes per second used to scale the usage graph',
+      '6M',
+    )
+    .option('--no-footer', 'Disable footer display')
     .helpOption('-h, --help', 'Show this help message and exit')
-    .parse(argv);
+    .parse(normalizedArgv);
 
   const options = program.opts<{
     listen: string;
     rserver: string;
     direct?: string;
+    peakBytes: string;
+    footer: boolean;
   }>();
 
   // Validate listen address
@@ -46,9 +59,17 @@ export function parseCliArgs(argv: string[]): ProxyConfig {
     throw new Error(`Invalid upstream server: ${options.rserver}`);
   }
 
+  // Validate peak bytes
+  const peakBytesResult = ByteSizeSchema.safeParse(options.peakBytes);
+  if (!peakBytesResult.success) {
+    throw new Error(`Invalid peak bytes: ${options.peakBytes}`);
+  }
+
   return {
     listen: listenResult.data,
     upstream: upstreamResult.data,
     directFile: options.direct,
+    peakBytes: peakBytesResult.data,
+    showFooter: options.footer,
   };
 }

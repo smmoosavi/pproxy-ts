@@ -31,6 +31,7 @@ export class UsageMeter {
   private readonly samples: UsageSample[] = [];
   private totalBytes = 0;
   private interval: NodeJS.Timeout | undefined;
+  private signal: AbortSignal | undefined;
 
   constructor(server: Server, logger: Logger, config: ProxyConfig) {
     this.server = server;
@@ -38,22 +39,34 @@ export class UsageMeter {
     this.config = config;
   }
 
-  start(): void {
+  start(signal: AbortSignal): void {
+    if (signal.aborted) {
+      return;
+    }
+
+    this.signal = signal;
     this.server.on('connectionClosed', this.handleConnectionClosed);
     this.renderFooter(0);
     this.interval = setInterval(() => {
       this.sampleActiveConnections();
     }, SAMPLE_INTERVAL_MS);
+    signal.addEventListener('abort', this.handleAbort, { once: true });
   }
 
-  stop(): void {
+  private stop(): void {
     if (this.interval) {
       clearInterval(this.interval);
       this.interval = undefined;
     }
     this.server.off('connectionClosed', this.handleConnectionClosed);
+    this.signal?.removeEventListener('abort', this.handleAbort);
+    this.signal = undefined;
     this.logger.clearFooter();
   }
+
+  private readonly handleAbort = (): void => {
+    this.stop();
+  };
 
   private readonly handleConnectionClosed = ({
     connectionId,

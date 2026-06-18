@@ -14,7 +14,12 @@ import { createDirectMatcher } from './direct.ts';
 export async function startProxyServer(
   config: ProxyConfig,
   logger: Logger,
+  signal: AbortSignal,
 ): Promise<Server> {
+  if (signal.aborted) {
+    throw new Error('Proxy server startup aborted');
+  }
+
   const { host, port } = parseListenAddress(config.listen);
   const upstreamProxyUrl =
     config.upstream === 'direct' ? null : config.upstream;
@@ -60,8 +65,26 @@ export async function startProxyServer(
       };
     },
   });
+  let stopPromise: Promise<void> | undefined;
+  const stop = () => {
+    stopPromise ??= stopProxyServer(server, logger);
+    return stopPromise;
+  };
+
+  signal.addEventListener(
+    'abort',
+    () => {
+      void stop();
+    },
+    { once: true },
+  );
 
   await server.listen();
+
+  if (signal.aborted) {
+    await stop();
+    throw new Error('Proxy server startup aborted');
+  }
 
   logger.info(`✓ Proxy server listening on ${host}:${port}`);
 
@@ -71,10 +94,7 @@ export async function startProxyServer(
 /**
  * Stop the proxy server gracefully
  */
-export async function stopProxyServer(
-  server: Server,
-  logger: Logger,
-): Promise<void> {
+async function stopProxyServer(server: Server, logger: Logger): Promise<void> {
   logger.info('Stopping proxy server...');
   await server.close(true);
   logger.info('✓ Proxy server stopped');

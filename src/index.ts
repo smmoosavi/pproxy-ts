@@ -5,27 +5,30 @@
 
 import { logger } from './logger.ts';
 import { parseCliArgs } from './cli.ts';
-import { startProxyServer, stopProxyServer } from './proxy.ts';
+import { startProxyServer } from './proxy.ts';
 import { UsageMeter } from './usage-meter.ts';
 
 async function main() {
   try {
     // Parse command line arguments
     const config = parseCliArgs(process.argv);
+    const abortController = new AbortController();
 
     // Start the proxy server
-    const server = await startProxyServer(config, logger);
+    const server = await startProxyServer(
+      config,
+      logger,
+      abortController.signal,
+    );
     const usageMeter = config.showFooter
       ? new UsageMeter(server, logger, config)
       : undefined;
-    usageMeter?.start();
+    usageMeter?.start(abortController.signal);
 
     // Handle graceful shutdown
-    const shutdown = async () => {
-      usageMeter?.stop();
+    const shutdown = () => {
       logger.emptyLine();
-      await stopProxyServer(server, logger);
-      process.exit(0);
+      abortController.abort();
     };
 
     process.on('SIGINT', shutdown);

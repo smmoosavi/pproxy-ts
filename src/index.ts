@@ -6,7 +6,8 @@
 import { logger } from './logger.ts';
 import { parseCliArgs } from './cli.ts';
 import { startProxyServer } from './proxy.ts';
-import { UsageMeter } from './usage-meter.ts';
+import { UsageFooterLogger } from './usage-footer-logger.ts';
+import { UsageMeter, createUsageStatsAtom } from './usage-meter.ts';
 
 async function main() {
   try {
@@ -20,10 +21,14 @@ async function main() {
       logger,
       abortController.signal,
     );
-    const usageMeter = config.showFooter
-      ? new UsageMeter(server, logger, config)
+    const usageStatsAtom = createUsageStatsAtom();
+    const usageMeter = new UsageMeter(server, usageStatsAtom);
+    usageMeter.start(abortController.signal);
+
+    const usageFooterLogger = config.showFooter
+      ? new UsageFooterLogger(usageStatsAtom, server, logger, config)
       : undefined;
-    usageMeter?.start(abortController.signal);
+    usageFooterLogger?.start(abortController.signal);
 
     // Handle graceful shutdown
     const shutdown = () => {

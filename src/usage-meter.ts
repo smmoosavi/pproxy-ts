@@ -1,12 +1,8 @@
 import type { ConnectionStats, Server } from 'proxy-chain';
-import { valuesToGraph } from './graph-utils.ts';
-import type { Logger } from './logger.ts';
-import type { ProxyConfig } from './types.ts';
+import { atom, type WritableAtom } from './atom.ts';
 
 const WINDOW_SECONDS = 60;
-const FOOTER_WIDTH = 60;
 const SAMPLE_INTERVAL_MS = 1000;
-const SEPARATOR = '─'.repeat(FOOTER_WIDTH);
 
 interface ConnectionSnapshot {
   totalBytes: number;
@@ -22,10 +18,24 @@ interface ConnectionClosedEvent {
   stats: ConnectionStats;
 }
 
+export interface UsageStats {
+  currentSpeedBytes: number;
+  totalBytes: number;
+  uptimeSeconds: number;
+  usageBySecond: number[];
+}
+
+export function createUsageStatsAtom(): WritableAtom<UsageStats> {
+  return atom<UsageStats>({
+    currentSpeedBytes: 0,
+    totalBytes: 0,
+    uptimeSeconds: 0,
+    usageBySecond: Array.from({ length: WINDOW_SECONDS }, () => 0),
+  });
+}
+
 export class UsageMeter {
   private readonly server: Server;
-  private readonly logger: Logger;
-  private readonly config: ProxyConfig;
   private readonly startedAt = Date.now();
   private readonly connectionSnapshots = new Map<number, ConnectionSnapshot>();
   private readonly samples: UsageSample[] = [];
@@ -33,10 +43,11 @@ export class UsageMeter {
   private interval: NodeJS.Timeout | undefined;
   private signal: AbortSignal | undefined;
 
-  constructor(server: Server, logger: Logger, config: ProxyConfig) {
+  constructor(
+    server: Server,
+    private readonly usageStats: WritableAtom<UsageStats>,
+  ) {
     this.server = server;
-    this.logger = logger;
-    this.config = config;
   }
 
   start(signal: AbortSignal): void {
@@ -46,7 +57,7 @@ export class UsageMeter {
 
     this.signal = signal;
     this.server.on('connectionClosed', this.handleConnectionClosed);
-    this.renderFooter(0);
+    this.publishStats(0);
     this.interval = setInterval(() => {
       this.sampleActiveConnections();
     }, SAMPLE_INTERVAL_MS);
@@ -61,7 +72,6 @@ export class UsageMeter {
     this.server.off('connectionClosed', this.handleConnectionClosed);
     this.signal?.removeEventListener('abort', this.handleAbort);
     this.signal = undefined;
-    this.logger.clearFooter();
   }
 
   private readonly handleAbort = (): void => {
@@ -79,7 +89,7 @@ export class UsageMeter {
 
     this.connectionSnapshots.delete(connectionId);
     this.addSample(deltaBytes);
-    this.renderFooter(deltaBytes);
+    this.publishStats(deltaBytes);
   };
 
   private sampleActiveConnections(): void {
@@ -99,7 +109,7 @@ export class UsageMeter {
     }
 
     this.addSample(deltaBytes);
-    this.renderFooter(deltaBytes);
+    this.publishStats(deltaBytes);
   }
 
   private addSample(bytes: number): void {
@@ -123,25 +133,17 @@ export class UsageMeter {
     }
   }
 
-  private renderFooter(currentSpeedBytes: number): void {
-    const usageBySecond = this.getUsageWindow();
-    const graph = valuesToGraph(usageBySecond, this.config.peakBytes);
+  private publishStats(currentSpeedBytes: number): void {
     const uptimeSeconds = Math.floor(
       (Date.now() - this.startedAt) / SAMPLE_INTERVAL_MS,
     );
-    const upstream =
-      this.config.upstream === 'direct' ? 'direct' : this.config.upstream;
-    const listenPort = this.server.port;
 
-    this.logger.setFooter([
-      SEPARATOR,
-      `up: ${upstream.padEnd(30)} | HTTP Proxy: :${listenPort}`,
-      `Uptime: ${formatDuration(uptimeSeconds).padEnd(9)} | Total: ${formatBytes(this.totalBytes).padEnd(10)} | Speed: ${formatBytes(currentSpeedBytes)}/s`,
-      graph
-        .padStart(Math.floor((FOOTER_WIDTH + graph.length) / 2))
-        .padEnd(FOOTER_WIDTH),
-      SEPARATOR,
-    ]);
+    this.usageStats.set({
+      currentSpeedBytes,
+      totalBytes: this.totalBytes,
+      uptimeSeconds,
+      usageBySecond: this.getUsageWindow(),
+    });
   }
 
   private getUsageWindow(): number[] {
@@ -164,40 +166,4 @@ function getTotalBytes(stats: ConnectionStats): number {
     (stats.trgTxBytes ?? 0) +
     (stats.trgRxBytes ?? 0)
   );
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) {
-    return `${bytes} B`;
-  }
-
-  const units = ['KB', 'MB', 'GB', 'TB'];
-  let value = bytes / 1024;
-  let unitIndex = 0;
-
-  while (value >= 1024 && unitIndex < units.length - 1) {
-    value /= 1024;
-    unitIndex += 1;
-  }
-
-  return `${formatNumber(value)} ${units[unitIndex]}`;
-}
-
-function formatNumber(value: number): string {
-  return value >= 10 ? value.toFixed(0) : value.toFixed(1);
-}
-
-function formatDuration(totalSeconds: number): string {
-  if (totalSeconds < 60) {
-    return `${totalSeconds}s`;
-  }
-
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  if (minutes < 60) {
-    return `${minutes}m ${seconds}s`;
-  }
-
-  const hours = Math.floor(minutes / 60);
-  return `${hours}h ${minutes % 60}m`;
 }

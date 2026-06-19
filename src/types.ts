@@ -17,7 +17,12 @@ export const ListenAddressSchema = z
   .regex(
     /^(\d{1,5}|[\d.]+:\d{1,5})$/,
     'Listen address must be PORT or HOST:PORT format',
-  );
+  )
+  .refine((listen) => {
+    const portText = listen.includes(':') ? listen.split(':')[1] : listen;
+    const port = Number(portText);
+    return Number.isInteger(port) && port >= 1 && port <= 65535;
+  }, 'Listen port must be between 1 and 65535');
 
 /**
  * Schema for upstream server URI

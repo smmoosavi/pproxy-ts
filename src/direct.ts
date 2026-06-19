@@ -57,7 +57,7 @@ export function parsePattern(line: string): PatternType | null {
  */
 export function parseDirectFile(filePath: string): PatternType[] {
   if (!existsSync(filePath)) {
-    return [];
+    throw new Error(`Direct file does not exist: ${filePath}`);
   }
 
   try {

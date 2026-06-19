@@ -11,7 +11,7 @@ import {
   DEFAULT_COLORS,
   type GraphBar,
   type Color,
-} from '../src/graph-utils.ts';
+} from './graph-utils.ts';
 
 describe('graph-utils', () => {
   describe('BLOCK_CHARS', () => {

@@ -4,24 +4,23 @@ A simple and modular HTTP proxy server with upstream proxy support.
 
 ## Installation
 
-Install dependencies using pnpm:
+This project is not published to npm. Each release ships a single `pproxy-ts` artifact that already bundles its runtime dependencies.
+
+To install, download `pproxy-ts` from the latest GitHub Release, make it executable, and run it with Node.js:
 
 ```bash
-pnpm install
+chmod +x ./pproxy-ts
+./pproxy-ts --help
 ```
+
+The only runtime requirement is Node.js.
 
 ## Usage
 
-Run the proxy server:
+Run the released artifact:
 
 ```bash
-pnpm start
-```
-
-Or with Node directly:
-
-```bash
-node --import tsx src/index.ts
+./pproxy-ts
 ```
 
 ### CLI Options
@@ -43,37 +42,37 @@ Options:
 Start proxy on default port (3080):
 
 ```bash
-pnpm start
+./pproxy-ts
 ```
 
 Start proxy on custom port:
 
 ```bash
-pnpm start -- -l 8080
+./pproxy-ts -l 8080
 ```
 
 Start proxy with HTTP upstream:
 
 ```bash
-pnpm start -- -r http://127.0.0.1:4080
+./pproxy-ts -r http://127.0.0.1:4080
 ```
 
 Start proxy with SOCKS5 upstream:
 
 ```bash
-pnpm start -- -r socks5://127.0.0.1:1080
+./pproxy-ts -r socks5://127.0.0.1:1080
 ```
 
 Start proxy with direct bypass file:
 
 ```bash
-pnpm start -- -r http://127.0.0.1:4080 -d pproxy.direct
+./pproxy-ts -r http://127.0.0.1:4080 -d pproxy.direct
 ```
 
 Set usage graph peak scale:
 
 ```bash
-pnpm start -- --peak-bytes 12M
+./pproxy-ts --peak-bytes 12M
 ```
 
 ## Direct Bypass Feature
@@ -125,7 +124,7 @@ foo.bar.com
 EOF
 
 # Run with direct bypass
-pnpm start -- -r socks5://127.0.0.1:1080 -d pproxy.direct
+./pproxy-ts -r socks5://127.0.0.1:1080 -d pproxy.direct
 ```
 
 When a request is made, the proxy will check if the hostname matches any pattern in the direct file. If it matches, the connection goes direct; otherwise, it uses the upstream proxy.
@@ -142,6 +141,12 @@ The project is organized into modular components:
 - **src/logger.ts** - Structured logging with TTY support
 
 ## Development
+
+If you want to build from source instead of downloading a release artifact:
+
+```bash
+pnpm install
+```
 
 Run in watch mode:
 

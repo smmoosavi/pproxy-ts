@@ -1,6 +1,7 @@
 {
   "name": "pproxy-ts",
   "version": "1.0.0",
+  "packageManager": "pnpm@10.14.0",
   "type": "module",
   "private": true,
   "main": "src/index.ts",

@@ -1,6 +1,6 @@
 {
   "name": "pproxy-ts",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "packageManager": "pnpm@10.14.0",
   "type": "module",
   "private": true,

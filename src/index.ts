@@ -14,12 +14,18 @@ async function main() {
     // Parse command line arguments
     const config = parseCliArgs(process.argv);
     const abortController = new AbortController();
+    let isShuttingDown = false;
+
+    const exitAfterShutdown = () => {
+      process.exit(0);
+    };
 
     // Start the proxy server
     const server = await startProxyServer(
       config,
       logger,
       abortController.signal,
+      exitAfterShutdown,
     );
     const usageStatsAtom = createUsageStatsAtom();
     const usageMeter = new UsageMeter(server, usageStatsAtom);
@@ -31,7 +37,12 @@ async function main() {
     usageFooterLogger?.start(abortController.signal);
 
     // Handle graceful shutdown
-    const shutdown = () => {
+    const shutdown = (signal: NodeJS.Signals) => {
+      if (isShuttingDown) {
+        process.exit(signal === 'SIGINT' ? 130 : 143);
+      }
+
+      isShuttingDown = true;
       logger.emptyLine();
       abortController.abort();
     };

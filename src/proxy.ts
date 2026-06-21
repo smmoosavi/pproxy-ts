@@ -15,6 +15,7 @@ export async function startProxyServer(
   config: ProxyConfig,
   logger: Logger,
   signal: AbortSignal,
+  onStopped?: () => void,
 ): Promise<Server> {
   if (signal.aborted) {
     throw new Error('Proxy server startup aborted');
@@ -74,7 +75,7 @@ export async function startProxyServer(
   signal.addEventListener(
     'abort',
     () => {
-      void stop();
+      void stop().then(onStopped);
     },
     { once: true },
   );

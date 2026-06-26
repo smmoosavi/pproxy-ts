@@ -3,6 +3,7 @@
  */
 
 import { Server } from 'proxy-chain';
+import { RequestError } from 'proxy-chain';
 import type { Logger } from './logger.ts';
 import type { ProxyConfig } from './types.ts';
 import { parseListenAddress } from './types.ts';
@@ -29,11 +30,17 @@ export async function startProxyServer(
   const directMatcher = config.directFile
     ? createDirectMatcher(config.directFile)
     : null;
+  const blockMatcher = config.blockFile
+    ? createDirectMatcher(config.blockFile)
+    : null;
 
   logger.info(`Starting HTTP proxy server on ${host}:${port}`);
   logger.info(`Upstream: ${config.upstream}`);
   if (config.directFile) {
     logger.info(`Direct file: ${config.directFile}`);
+  }
+  if (config.blockFile) {
+    logger.info(`Block file: ${config.blockFile}`);
   }
 
   const server = new Server({
@@ -48,6 +55,12 @@ export async function startProxyServer(
       port,
       isHttp,
     }) => {
+      const shouldBlock = blockMatcher ? blockMatcher(hostname) : false;
+      if (shouldBlock) {
+        logger.info(`→ [block] ${hostname}:${port}`);
+        throw new RequestError(`Blocked by pproxy-ts: ${hostname}`, 403);
+      }
+
       // Check if this hostname should bypass the proxy
       const shouldBypass = directMatcher ? directMatcher(hostname) : false;
       const effectiveUpstream = shouldBypass ? null : upstreamProxyUrl;

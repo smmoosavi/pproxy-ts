@@ -32,6 +32,7 @@ Options:
   -l, --listen <address>   HTTP proxy server listen address (default: "0.0.0.0:3080")
   -r, --rserver <uri>      Upstream proxy server URI (default: "direct")
   -d, --direct <file>      Path to direct file with domains to bypass proxy
+  -b, --block <file>       Path to block file with domains to reject
   -p, --peak-bytes <bytes> Maximum bytes per second used to scale the usage graph (default: "6M")
   --no-footer              Disable footer display
   -h, --help               Show help message
@@ -67,6 +68,12 @@ Start proxy with direct bypass file:
 
 ```bash
 ./pproxy-ts -r http://127.0.0.1:4080 -d pproxy.direct
+```
+
+Start proxy with block file:
+
+```bash
+./pproxy-ts -b pproxy.block
 ```
 
 Set usage graph peak scale:
@@ -128,6 +135,24 @@ EOF
 ```
 
 When a request is made, the proxy will check if the hostname matches any pattern in the direct file. If it matches, the connection goes direct; otherwise, it uses the upstream proxy.
+
+## Block Feature
+
+The block feature allows you to specify domains that should be rejected by the proxy. The block file uses the same pattern format as the direct file.
+
+```bash
+# Create your block file
+cat > pproxy.block << EOF
+ads.example.com
+*.tracking.example
+telemetry
+EOF
+
+# Run with blocking enabled
+./pproxy-ts -b pproxy.block
+```
+
+When a request hostname matches the block file, the proxy rejects it with a 403 response before applying direct or upstream routing.
 
 ## Architecture
 

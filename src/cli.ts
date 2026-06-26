@@ -30,6 +30,7 @@ export function parseCliArgs(argv: string[]): ProxyConfig {
       '-d, --direct <file>',
       'Path to direct file with domains to bypass proxy',
     )
+    .option('-b, --block <file>', 'Path to block file with domains to reject')
     .option(
       '-p, --peak-bytes <bytes>',
       'Maximum bytes per second used to scale the usage graph',
@@ -43,6 +44,7 @@ export function parseCliArgs(argv: string[]): ProxyConfig {
     listen: string;
     rserver: string;
     direct?: string;
+    block?: string;
     peakBytes: string;
     footer: boolean;
   }>();
@@ -69,6 +71,7 @@ export function parseCliArgs(argv: string[]): ProxyConfig {
     listen: listenResult.data,
     upstream: upstreamResult.data,
     directFile: options.direct,
+    blockFile: options.block,
     peakBytes: peakBytesResult.data,
     showFooter: options.footer,
   };

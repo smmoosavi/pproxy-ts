@@ -72,6 +72,8 @@ export interface ProxyConfig {
   upstream: string;
   /** Path to direct file with domains to bypass proxy (optional) */
   directFile?: string;
+  /** Path to block file with domains to reject (optional) */
+  blockFile?: string;
   /** Maximum bytes per second used to scale the usage graph */
   peakBytes: number;
   /** Whether to show the live usage footer */

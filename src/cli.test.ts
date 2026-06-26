@@ -25,4 +25,20 @@ describe('parseCliArgs', () => {
       parseCliArgs(['node', 'pproxy-ts', '--listen', '127.0.0.1:99999']),
     ).toThrow('Invalid listen address: 127.0.0.1:99999');
   });
+
+  it('accepts direct and block files', () => {
+    expect(
+      parseCliArgs([
+        'node',
+        'pproxy-ts',
+        '--direct',
+        'pproxy.direct',
+        '--block',
+        'pproxy.block',
+      ]),
+    ).toMatchObject({
+      directFile: 'pproxy.direct',
+      blockFile: 'pproxy.block',
+    });
+  });
 });

@@ -159,11 +159,6 @@ export class UsageMeter {
   }
 }
 
-function getTotalBytes(stats: ConnectionStats): number {
-  return (
-    stats.srcTxBytes +
-    stats.srcRxBytes +
-    (stats.trgTxBytes ?? 0) +
-    (stats.trgRxBytes ?? 0)
-  );
+export function getTotalBytes(stats: ConnectionStats): number {
+  return stats.srcTxBytes + stats.srcRxBytes;
 }

@@ -35,6 +35,7 @@ Options:
   -b, --block <file>       Path to block file with domains to reject
   -p, --peak-bytes <bytes> Maximum bytes per second used to scale the usage graph (default: "6M")
   --no-footer              Disable footer display
+  -v, --version            Show version and exit
   -h, --help               Show help message
 ```
 

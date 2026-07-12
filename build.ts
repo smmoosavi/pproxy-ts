@@ -10,6 +10,14 @@ import { join } from 'path';
 
 const distDir = './dist';
 const outputFile = join(distDir, 'pproxy-ts');
+const packageJson = await Bun.file('./package.json').json();
+const gitHash = Bun.spawnSync(['git', 'rev-parse', '--short', 'HEAD'])
+  .stdout.toString()
+  .trim();
+
+if (!gitHash) {
+  throw new Error('Unable to determine the current Git commit hash');
+}
 
 // Create dist directory if it doesn't exist
 if (!existsSync(distDir)) {
@@ -28,6 +36,10 @@ try {
     minify: false,
     sourcemap: 'none',
     splitting: false,
+    define: {
+      __PPROXY_VERSION__: JSON.stringify(packageJson.version),
+      __PPROXY_GIT_HASH__: JSON.stringify(gitHash),
+    },
     naming: {
       entry: 'pproxy-ts',
     },

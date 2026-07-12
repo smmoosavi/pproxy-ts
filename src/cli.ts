@@ -10,6 +10,14 @@ import {
   UpstreamServerSchema,
 } from './types.ts';
 
+declare const __PPROXY_VERSION__: string;
+declare const __PPROXY_GIT_HASH__: string;
+
+const version =
+  typeof __PPROXY_VERSION__ === 'string' ? __PPROXY_VERSION__ : 'development';
+const gitHash =
+  typeof __PPROXY_GIT_HASH__ === 'string' ? __PPROXY_GIT_HASH__ : 'unknown';
+
 /**
  * Parse command line arguments and return configuration
  */
@@ -20,6 +28,11 @@ export function parseCliArgs(argv: string[]): ProxyConfig {
   program
     .name('pproxy-ts')
     .description('A simple HTTP proxy server with upstream support')
+    .version(
+      `${version} (${gitHash})`,
+      '-v, --version',
+      'Show version and exit',
+    )
     .option(
       '-l, --listen <address>',
       'HTTP proxy server listen address',

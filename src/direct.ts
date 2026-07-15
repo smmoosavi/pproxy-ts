@@ -3,7 +3,7 @@
  * Handles parsing and matching of domains that should bypass the proxy
  */
 
-import { readFileSync, existsSync } from 'fs';
+import { readFileSync, existsSync, statSync } from 'fs';
 import { z } from 'zod';
 
 /**
@@ -140,6 +140,21 @@ export function shouldSendDirect(
 export function createDirectMatcher(
   filePath: string,
 ): (hostname: string) => boolean {
-  const patterns = parseDirectFile(filePath);
-  return (hostname: string) => shouldSendDirect(hostname, patterns);
+  let fileStats = statSync(filePath);
+  let patterns = parseDirectFile(filePath);
+
+  return (hostname: string) => {
+    const currentStats = statSync(filePath);
+    if (
+      currentStats.mtimeMs !== fileStats.mtimeMs ||
+      currentStats.ctimeMs !== fileStats.ctimeMs ||
+      currentStats.size !== fileStats.size ||
+      currentStats.ino !== fileStats.ino
+    ) {
+      patterns = parseDirectFile(filePath);
+      fileStats = currentStats;
+    }
+
+    return shouldSendDirect(hostname, patterns);
+  };
 }

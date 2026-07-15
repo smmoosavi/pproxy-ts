@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { describe, expect, it } from 'bun:test';
-import { parseDirectFile } from './direct.ts';
+import { createDirectMatcher, parseDirectFile } from './direct.ts';
 
 describe('parseDirectFile', () => {
   it('throws when the direct file does not exist', () => {
@@ -23,6 +23,28 @@ describe('parseDirectFile', () => {
         { type: 'wildcard-subdomain', domain: 'local' },
         { type: 'partial', keyword: 'localhost' },
       ]);
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('createDirectMatcher', () => {
+  it('reloads patterns when the direct file changes', () => {
+    const tempDir = mkdtempSync(join(tmpdir(), 'pproxy-ts-'));
+    const directFile = join(tempDir, 'direct');
+
+    try {
+      writeFileSync(directFile, 'first.example.com\n');
+      const matcher = createDirectMatcher(directFile);
+
+      expect(matcher('first.example.com')).toBe(true);
+      expect(matcher('second.example.com')).toBe(false);
+
+      writeFileSync(directFile, 'second.example.com\n');
+
+      expect(matcher('first.example.com')).toBe(false);
+      expect(matcher('second.example.com')).toBe(true);
     } finally {
       rmSync(tempDir, { recursive: true, force: true });
     }

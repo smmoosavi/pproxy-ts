@@ -75,6 +75,7 @@ export class UsageMeter {
   }
 
   private readonly handleAbort = (): void => {
+    this.sampleActiveConnections();
     this.stop();
   };
 

@@ -41,8 +41,26 @@ export class UsageFooterLogger {
   }
 
   private readonly handleAbort = (): void => {
+    const stats = this.usageStats.get();
     this.stop();
+    this.logger.raw(this.buildShutdownSummary(stats).join('\n'));
   };
+
+  private buildShutdownSummary(stats: UsageStats): string[] {
+    const averageSpeedBytes =
+      stats.uptimeSeconds > 0 ? stats.totalBytes / stats.uptimeSeconds : 0;
+    const upstream =
+      this.config.upstream === 'direct' ? 'direct' : this.config.upstream;
+
+    return [
+      'Proxy stopped',
+      `Uptime: ${formatDuration(stats.uptimeSeconds)}`,
+      `Total transferred: ${formatBytes(stats.totalBytes)}`,
+      `Average speed: ${formatBytes(averageSpeedBytes)}/s`,
+      `Upstream: ${upstream}`,
+      `Listen port: ${this.server.port}`,
+    ];
+  }
 
   private renderFooter(stats: UsageStats): void {
     const graph = valuesToGraph(stats.usageBySecond, this.config.peakBytes);

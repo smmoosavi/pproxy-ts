@@ -93,32 +93,41 @@ The direct bypass feature allows you to specify domains that should bypass the u
 
 ### Direct File Format
 
-Create a file named `pproxy.direct` (or any name you prefer) with one pattern per line:
+Create a file named `pproxy.direct` (or any name you prefer) with one rule per line:
 
 ```
-# Exact domain match
-foo.bar.com
-google.com
+# Exact hostname
+example.com
 
-# Wildcard subdomain match (matches any subdomain)
+# Subdomains only
 *.example.com
-*.github.com
 
-# Wildcard TLD match (matches any domain with this TLD)
-*.net
-*.local
+# Domain and subdomains
++.example.com
 
-# Partial keyword match (matches anywhere in hostname)
-localhost
-foobar
+# Contains
+*example*
+
+# Starts with
+example*
+
+# Ends with
+*example
+
+# Comments and empty lines are ignored
+# ignore
 ```
 
-### Pattern Types
+### Rule Types
 
-1. **Exact match**: `foo.bar.com` - Matches only `foo.bar.com`
-2. **Wildcard subdomain**: `*.example.com` - Matches `foo.example.com`, `bar.example.com`, and `example.com` itself
-3. **Wildcard TLD**: `*.net` - Matches any domain ending with `.net`
-4. **Partial match**: `localhost` or `foobar` - Matches any hostname containing this keyword
+1. **Exact**: `example.com` matches only `example.com`
+2. **Subdomains only**: `*.example.com` matches `www.example.com` and deeper subdomains, but not `example.com`
+3. **Domain and subdomains**: `+.example.com` matches `example.com`, `www.example.com`, and deeper subdomains
+4. **Contains**: `*example*` matches any hostname containing `example`
+5. **Prefix**: `example*` matches any hostname starting with `example`
+6. **Suffix**: `*example` matches any hostname ending with `example`
+
+Rules are case-insensitive. Lines beginning with `#` and empty lines are ignored.
 
 ### Usage Example
 
@@ -128,6 +137,7 @@ cat > pproxy.direct << EOF
 localhost
 *.local
 *.example.com
+192.168.*
 foo.bar.com
 EOF
 
@@ -135,11 +145,11 @@ EOF
 ./pproxy-ts -r socks5://127.0.0.1:1080 -d pproxy.direct
 ```
 
-When a request is made, the proxy will check if the hostname matches any pattern in the direct file. If it matches, the connection goes direct; otherwise, it uses the upstream proxy.
+When a request is made, the proxy will check if the hostname matches any rule in the direct file. If it matches, the connection goes direct; otherwise, it uses the upstream proxy.
 
 ## Block Feature
 
-The block feature allows you to specify domains that should be rejected by the proxy. The block file uses the same pattern format as the direct file.
+The block feature allows you to specify domains that should be rejected by the proxy. The block file uses the same rule format as the direct file.
 
 ```bash
 # Create your block file
@@ -162,7 +172,7 @@ The project is organized into modular components:
 - **src/index.ts** - Main entry point
 - **src/cli.ts** - CLI argument parsing with Commander
 - **src/proxy.ts** - Proxy server logic using proxy-chain
-- **src/direct.ts** - Direct bypass list parsing and matching
+- **src/rules.ts** - Shared direct and block rule parsing and matching
 - **src/types.ts** - Type definitions and Zod schemas
 - **src/logger.ts** - Structured logging with TTY support
 

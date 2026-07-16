@@ -2,18 +2,20 @@
 # Lines starting with # are comments
 # Empty lines are ignored
 
-# Exact domain match
-foo.bar.com
-google.com
+# Exact hostname
+example.com
 
-# Wildcard subdomain match (matches any subdomain)
+# Subdomains only
 *.example.com
-*.github.com
 
-# Wildcard TLD match (matches any domain with this TLD)
-*.net
-*.local
+# Domain and subdomains
++.example.com
 
-# Partial keyword match (matches anywhere in hostname)
-localhost
-foobar
+# Contains
+*example*
+
+# Starts with
+example*
+
+# Ends with
+*example

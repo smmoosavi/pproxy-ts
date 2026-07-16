@@ -7,7 +7,7 @@ import { RequestError } from 'proxy-chain';
 import type { Logger } from './logger.ts';
 import type { ProxyConfig } from './types.ts';
 import { parseListenAddress } from './types.ts';
-import { createDirectMatcher } from './direct.ts';
+import { createRulesMatcher } from './rules.ts';
 
 /**
  * Create and start the proxy server
@@ -28,10 +28,10 @@ export async function startProxyServer(
 
   // Create direct matcher if direct file is specified
   const directMatcher = config.directFile
-    ? createDirectMatcher(config.directFile)
+    ? createRulesMatcher(config.directFile)
     : null;
   const blockMatcher = config.blockFile
-    ? createDirectMatcher(config.blockFile)
+    ? createRulesMatcher(config.blockFile)
     : null;
 
   logger.info(`Starting HTTP proxy server on ${host}:${port}`);
